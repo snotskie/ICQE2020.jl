@@ -102,7 +102,7 @@ p1 = plot(myENA1,
     displayFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Support"]
 )
 
-k = 0.8
+k = 1
 xlims!(p1, -k, k)
 ylims!(p1, -k, k)
 title!(p1, "Means Rotation (Support)")
