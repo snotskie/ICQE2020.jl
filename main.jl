@@ -50,19 +50,43 @@ display(unique(TADMUS_Data[!, :Speaker]))
 display(unique(TADMUS_Data[!, units]))
 display(unique(TADMUS_Data[!, conversations]))
 
-# Running first ENA
-myRotation = EpistemicNetworkAnalysis.Formula2Rotation(
-    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole + Team + DummyMacroRole&Team + (1|Team) + (DummyMacroRole|Team)),
-    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
-)
-
-myENA = ENAModel(TADMUS_Data, codes, conversations, units,
-    rotateBy=myRotation,
+# Running ENA Models
+## MR1
+myRotation1 = MeansRotation(:MacroRole, "Support", "Command")
+myENA1 = ENAModel(TADMUS_Data, codes, conversations, units,
+    rotateBy=myRotation1,
     windowSize=5,
     subsetFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command", "Support"]
 )
 
-display(myENA)
+## F2
+myRotation2 = EpistemicNetworkAnalysis.Formula2Rotation(
+    LinearModel, 2, @formula(y ~ 1 + DummyMacroRole),
+    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
+)
+
+myENA2 = ENAModel(TADMUS_Data, codes, conversations, units,
+    rotateBy=myRotation2,
+    windowSize=5,
+    subsetFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command", "Support"]
+)
+
+## HLM
+myRotation3 = EpistemicNetworkAnalysis.Formula2Rotation(
+    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole + Team + DummyMacroRole&Team + (1 + DummyMacroRole|Team)),
+    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
+)
+
+myENA3 = ENAModel(TADMUS_Data, codes, conversations, units,
+    rotateBy=myRotation3,
+    windowSize=5,
+    subsetFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command", "Support"]
+)
+
+# Displaying descriptive results
+display(myENA1)
+display(myENA2)
+display(myENA3)
 
 # Plotting
 myArtist = EpistemicNetworkAnalysis.TVRemoteArtist(
@@ -70,50 +94,91 @@ myArtist = EpistemicNetworkAnalysis.TVRemoteArtist(
     :DummyCOND, 0, 1
 )
 
-p1 = plot(myENA,
+## MR1
+p1 = plot(myENA1,
     artist=myArtist,
-    showconfidence=true,
-    yaxisname="Control/Treatment",
-    xaxisname="Support/Command"
+    yaxisname="SVD1",
+    xaxisname="Support/Command",
+    displayFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Support"]
 )
 
-k = 1
+k = 0.8
 xlims!(p1, -k, k)
 ylims!(p1, -k, k)
-title!(p1, "Controlled Model")
-savefig(p1, "controlled.svg")
-savefig(p1, "controlled.png")
+title!(p1, "Means Rotation (Support)")
+savefig(p1, "mr1-support.svg")
+savefig(p1, "mr1-support.png")
 display(p1)
 
-# Running second ENA
-myRotation = EpistemicNetworkAnalysis.Formula2Rotation(
-    LinearModel, 2, @formula(y ~ 1 + DummyMacroRole),
-    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
-)
-
-myENA = ENAModel(TADMUS_Data, codes, conversations, units,
-    rotateBy=myRotation,
-    windowSize=5,
-    subsetFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command", "Support"]
-)
-
-display(myENA)
-
-# Plotting
-p2 = plot(myENA,
+p2 = plot(myENA1,
     artist=myArtist,
-    showconfidence=true,
-    yaxisname="Control/Treatment",
+    yaxisname="SVD1",
     xaxisname="Support/Command",
-    subsetFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command"]
+    displayFilter=TADMUS_Row -> TADMUS_Row[:MacroRole] in ["Command"]
 )
 
-k = 1
 xlims!(p2, -k, k)
 ylims!(p2, -k, k)
-title!(p2, "Univariate Model")
-savefig(p2, "uncontrolled.svg")
-savefig(p2, "uncontrolled.png")
+title!(p2, "Means Rotation (Command)")
+savefig(p2, "mr1-command.svg")
+savefig(p2, "mr1-command.png")
 display(p2)
 
-# TODO run each model on just one of the two groups
+p3 = plot(myENA1,
+    artist=myArtist,
+    yaxisname="SVD",
+    xaxisname="Support/Command",
+    showunits=false
+)
+
+xlims!(p3, -k, k)
+ylims!(p3, -k, k)
+title!(p3, "Means Rotation (Subtraction)")
+savefig(p3, "mr1-subtract.svg")
+savefig(p3, "mr1-subtract.png")
+display(p3)
+
+## F2
+k = 1
+p4 = plot(myENA2,
+    artist=myArtist,
+    yaxisname="Control/Treatment",
+    xaxisname="Support/Command",
+    showunits=false
+)
+
+xlims!(p4, -k, k)
+ylims!(p4, -k, k)
+title!(p4, "Univariate")
+savefig(p4, "univariate.svg")
+savefig(p4, "univariate.png")
+display(p4)
+
+## HLM
+k = 1
+p5 = plot(myENA3,
+    artist=myArtist,
+    yaxisname="Control/Treatment",
+    xaxisname="Support/Command",
+    showunits=false
+)
+
+xlims!(p5, -k, k)
+ylims!(p5, -k, k)
+title!(p5, "Hierarchical")
+savefig(p5, "hierarchical.svg")
+savefig(p5, "hierarchical.png")
+display(p5)
+
+# Hypothesis tests
+m1 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA1.refitUnitModel)
+m2 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA2.refitUnitModel)
+m3 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA3.refitUnitModel)
+
+display(m1)
+display(m2)
+display(m3)
+
+println(var(predict(m1)) / var(residuals(m1) + predict(m1))) # 0.6119
+println(var(predict(m2)) / var(residuals(m2) + predict(m2))) # 0.6119 (same x-axis as above)
+println(var(predict(m3)) / var(residuals(m3) + predict(m3))) # 0.5157
