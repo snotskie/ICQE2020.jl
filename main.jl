@@ -9,6 +9,14 @@ using HypothesisTests
 
 # Data preprocessing
 TADMUS_Data = DataFrame(CSV.File("../TADMUS/data/TADMUSCoded.csv"))
+
+# Control_Data = filter(TADMUS_Row -> TADMUS_Row[:COND] == "Control", TADMUS_Data)
+# Treatment_Data = filter(TADMUS_Row -> TADMUS_Row[:COND] == "Experimental", TADMUS_Data)
+# TADMUS_Data = vcat(Control_Data, Treatment_Data)
+# TADMUS_Data = vcat(Treatment_Data, Control_Data)
+# NewTeamNames = Dict(old => "Team $i" for (i, old) in enumerate(unique(TADMUS_Data[!, :Team])))
+# TADMUS_Data[!, :Team] = map(x -> NewTeamNames[x], TADMUS_Data[!, :Team])
+
 TADMUS_Data[!, :DummyMacroRole] = map(eachrow(TADMUS_Data)) do TADMUS_Row
     if TADMUS_Row[:MacroRole] == "Command"
         return 1
@@ -61,8 +69,8 @@ myENA1 = ENAModel(TADMUS_Data, codes, conversations, units,
 
 ## F2
 myRotation2 = EpistemicNetworkAnalysis.Formula2Rotation(
-    LinearModel, 2, @formula(y ~ 1 + DummyMacroRole),
-    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
+    LinearModel, 2, @formula(y ~ 1 + DummyMacroRole), nothing,
+    LinearModel, 2, @formula(y ~ 1 + DummyCOND), nothing
 )
 
 myENA2 = ENAModel(TADMUS_Data, codes, conversations, units,
@@ -73,8 +81,8 @@ myENA2 = ENAModel(TADMUS_Data, codes, conversations, units,
 
 ## HLM
 myRotation3 = EpistemicNetworkAnalysis.Formula2Rotation(
-    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole + Team + DummyMacroRole&Team + (1 + DummyMacroRole|Team)),
-    LinearModel, 2, @formula(y ~ 1 + DummyCOND)
+    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole + Team + DummyMacroRole&Team + (1 + DummyMacroRole|Team)), Dict(:Team => EffectsCoding()),
+    LinearModel, 2, @formula(y ~ 1 + DummyCOND), nothing
 )
 
 myENA3 = ENAModel(TADMUS_Data, codes, conversations, units,
@@ -171,9 +179,9 @@ savefig(p5, "hierarchical.png")
 display(p5)
 
 # Hypothesis tests
-m1 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA1.refitUnitModel)
-m2 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA2.refitUnitModel)
-m3 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA3.refitUnitModel)
+m1 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA1.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
+m2 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA2.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
+m3 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA3.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
 
 display(m1)
 display(m2)
@@ -181,4 +189,4 @@ display(m3)
 
 println(var(predict(m1)) / var(residuals(m1) + predict(m1))) # 0.6119
 println(var(predict(m2)) / var(residuals(m2) + predict(m2))) # 0.6119 (same x-axis as above)
-println(var(predict(m3)) / var(residuals(m3) + predict(m3))) # 0.5157
+println(var(predict(m3)) / var(residuals(m3) + predict(m3))) # 0.6134
