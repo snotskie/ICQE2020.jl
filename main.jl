@@ -81,7 +81,10 @@ myENA2 = ENAModel(TADMUS_Data, codes, conversations, units,
 
 ## HLM
 myRotation3 = EpistemicNetworkAnalysis.Formula2Rotation(
-    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole + Team + DummyMacroRole&Team + (1 + DummyMacroRole|Team)), Dict(:Team => EffectsCoding()),
+    MixedModel, 2, @formula(y ~ 1 + DummyMacroRole
+                                  + (1 + DummyMacroRole|Team&Scenario)),
+                Dict(:Team => EffectsCoding(), :Scenario => EffectsCoding()), # NOTE x-axis should use a continous or 0/1 dummy with dummycoding, to be interpretable correctly. the moderating categorical vars should use effectscoding, so that we are interpreting the slope when in the grand mean, not when in an arbitrary reference group
+    # LinearModel, 2, @formula(y ~ 1 + DummyMacroRole + AVG_LEADTOT), nothing,
     LinearModel, 2, @formula(y ~ 1 + DummyCOND), nothing
 )
 
@@ -179,14 +182,113 @@ savefig(p5, "hierarchical.png")
 display(p5)
 
 # Hypothesis tests
-m1 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA1.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
-m2 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA2.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
-m3 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA3.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
+# # m1 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA1.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
+# # m2 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA2.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
+# # m3 = fit(MixedModel, @formula(DummyMacroRole ~ 1 + pos_x + Team + pos_x&Team + (1 + pos_x|Team)), myENA3.refitUnitModel, contrasts=Dict(:Team => EffectsCoding()))
 
-display(m1)
-display(m2)
-display(m3)
+# m1 = fit(LinearModel, @formula(DummyMacroRole ~ 1 + pos_x + AVG_LEADTOT), myENA1.refitUnitModel)
+# m2 = fit(LinearModel, @formula(DummyMacroRole ~ 1 + pos_x + AVG_LEADTOT), myENA2.refitUnitModel)
+# m3 = fit(LinearModel, @formula(DummyMacroRole ~ 1 + pos_x + AVG_LEADTOT), myENA3.refitUnitModel)
 
-println(var(predict(m1)) / var(residuals(m1) + predict(m1))) # 0.6119
-println(var(predict(m2)) / var(residuals(m2) + predict(m2))) # 0.6119 (same x-axis as above)
-println(var(predict(m3)) / var(residuals(m3) + predict(m3))) # 0.6134
+# display(m1)
+# display(m2)
+# display(m3)
+
+# println(var(predict(m1)) / var(residuals(m1) + predict(m1))) # 0.6119
+# println(var(predict(m2)) / var(residuals(m2) + predict(m2))) # 0.6119 (same x-axis as above)
+# println(var(predict(m3)) / var(residuals(m3) + predict(m3))) # 0.6134
+
+# Idea
+RSData = ena_dataset("RS.data")
+Genders = Dict(
+    "steven z" => "Male",
+    "akash v" => "Male",
+    "alexander b" => "Male",
+    "brandon l" => "Male",
+    "christian x" => "Male",
+    "jordan l" => "Male",
+    "arden f" => "Male",
+    "margaret n" => "Female",
+    "connor f" => "Male",
+    "jimmy i" => "Male",
+    "devin c" => "Male",
+    "tiffany x" => "Female",
+    "amelia n" => "Female",
+    "luis t" => "Male",
+    "amalia x" => "Female",
+    "robert z" => "Male",
+    "joseph k" => "Male",
+    "peter h" => "Male",
+    "carl b" => "Male",
+    "mitchell h" => "Male",
+    "peter s" => "Male",
+    "joseph h" => "Male",
+    "cameron k" => "Male",
+    "fletcher l" => "Male",
+    "amirah u" => "Female",
+    "kevin g" => "Male",
+    "brent p" => "Male",
+    "kiana k" => "Female",
+    "madeline g" => "Female",
+    "justin y" => "Male",
+    "ruzhen e" => "Male",
+    "brandon f" => "Male",
+    "jackson p" => "Male",
+    "shane t" => "Male",
+    "samuel o" => "Male",
+    "casey f" => "Male",
+    "keegan q" => "Male",
+    "nicholas l" => "Male",
+    "cameron i" => "Male",
+    "cormick u" => "Male",
+    "daniel t" => "Male",
+    "christina b" => "Female",
+    "derek v" => "Male",
+    "nicholas n" => "Male",
+    "abigail z" => "Female",
+    "caitlyn y" => "Female",
+    "nathan d" => "Male",
+    "luke u" => "Male"
+)
+RSData[!, :Gender] = map(RSRow -> Genders[RSRow[:UserName]], eachrow(RSData))
+conversations = [:Condition, :GameHalf, :GroupName]
+units = [:Condition, :GameHalf, :UserName]
+codes = [
+    :Data,
+    :Technical_Constraints,
+    :Performance_Parameters,
+    :Client_and_Consultant_Requests,
+    :Design_Reasoning,
+    :Collaboration
+]
+
+# myRotation4 = EpistemicNetworkAnalysis.Formula2Rotation(
+#     LinearModel, 2, @formula(y ~ 1 + Condition + Gender + Condition&Gender), Dict(:Condition => EffectsCoding(), :Gender => EffectsCoding()),
+#     LinearModel, 2, @formula(y ~ 1 + GameHalf), Dict(:GameHalf => EffectsCoding())
+# )
+
+# myRotation4 = EpistemicNetworkAnalysis.Formula2Rotation(
+#     LinearModel, 2, @formula(y ~ 1 + Gender), nothing,
+#     LinearModel, 2, @formula(y ~ 1 + Condition), nothing
+# )
+
+myRotation4 = EpistemicNetworkAnalysis.Formula2Rotation(
+    MixedModel, 2, @formula(y ~ 1 + Gender + (1 + Gender|GroupName)), Dict(:GroupName => EffectsCoding()),
+    LinearModel, 2, @formula(y ~ 1 + Condition), nothing
+)
+
+myENA4 = ENAModel(RSData, codes, conversations, units, rotateBy=myRotation4)
+display(myENA4)
+myArtist = EpistemicNetworkAnalysis.TVRemoteArtist(
+    :Gender, "Male", "Female",
+    :Condition, "FirstGame", "SecondGame"
+)
+p5 = plot(myENA4, artist=myArtist, xaxisname="Female/Male", yaxisname="First Game/Second Game")
+# title!(p5, "Univariate")
+title!(p5, "Hierarchical")
+# savefig(p5, "gender.svg")
+savefig(p5, "gender2.svg")
+
+# # m4 = fit(MixedModel, @formula(GameHalf ~ 1 + pos_x + GroupName + pos_x&GroupName + (1 + pos_x|GroupName)), myENA4.refitUnitModel, contrasts=Dict(:GroupName => EffectsCoding()))
+# # display(m4)
+# # println(var(predict(m4)) / var(residuals(m4) + predict(m4))) # 0.6119
