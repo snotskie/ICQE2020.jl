@@ -8,12 +8,6 @@ using Statistics
 using MixedModels
 using HypothesisTests
 
-# cond UserName
-# group by cond
-# means on cond
-# exclude second half
-# drop coll and client
-
 # Data preprocessing
 RSData = ena_dataset("RS.data")
 RSData[!, :CondGroupName] = string.(values.(eachrow(RSData[!, [:Condition, :GroupName]])))
@@ -32,7 +26,7 @@ codes = [
 
 # Helper
 function please(rotation::ENARotation, artist::ENAArtist, displayset::Array{String,1},
-    plottitle::String, filename::String, width::Int, height::Int, xlabel::String, ylabel::String, showunits::Bool)
+    plottitle::String, filename::String, width::Real, height::Real, xlabel::String, ylabel::String, showunits::Bool)
 
     ## Run model
     ena = ENAModel(
@@ -74,7 +68,12 @@ function please(rotation::ENARotation, artist::ENAArtist, displayset::Array{Stri
 end
 
 # Rotations
-means = MeansRotation(:Condition, "FirstGame", "SecondGame")
+means = MeansRotation(:NewC_Change, "No.Change", "Pos.Change")
+binned = EpistemicNetworkAnalysis.Formula2Rotation(
+    LinearModel, 2, @formula(y ~ 1 + NewC_Change), Dict(:NewC_Change => DummyCoding(base="No.Change")),
+    LinearModel, 2, @formula(y ~ 1 + Condition), Dict(:Condition => DummyCoding(base="FirstGame"))
+)
+
 univariate = EpistemicNetworkAnalysis.Formula2Rotation(
     LinearModel, 2, @formula(y ~ 1 + CONFIDENCE_Change), nothing,
     LinearModel, 2, @formula(y ~ 1 + Condition), Dict(:Condition => DummyCoding(base="FirstGame"))
@@ -86,13 +85,23 @@ nested = EpistemicNetworkAnalysis.Formula2Rotation(
 )
 
 # Artists
-black = DefaultArtist()
-# simple = MeansArtist(:NewC_Change, "No.Change", "Pos.Change")
 simple = MeansArtist(:Condition, "FirstGame", "SecondGame")
+tv = EpistemicNetworkAnalysis.TVRemoteArtist(
+    :Condition, "FirstGame", "SecondGame",
+    :NewC_Change, "No.Change", "Pos.Change"
+)
 
 # Requests
-please(means, simple, ["FirstGame"], "Means", "means-simple-first", 1, 1, "First/Second Game", "SVD", true)
-please(means, simple, ["SecondGame"], "Means", "means-simple-second", 1, 1, "First/Second Game", "SVD", true)
-please(means, simple, ["FirstGame", "SecondGame"], "Means", "means-simple", 1, 1, "First/Second Game", "SVD", false)
-please(univariate, simple, ["FirstGame", "SecondGame"], "Univariate", "univariate-simple", 1, 1, "Confidence Change", "First/Second Game", false)
-please(nested, simple, ["FirstGame", "SecondGame"], "Nested", "nested-simple", 1, 1, "Confidence Change", "First/Second Game", false)
+please(means, tv, ["FirstGame"], "Means Rotation, First Game", "means-tv-first", 1, 1, "No/Pos Confidence Change", "SVD", true)
+please(means, tv, ["SecondGame"], "Means Rotation, Second Game", "means-tv-second", 1, 1, "No/Pos Confidence Change", "SVD", true)
+please(means, tv, ["FirstGame", "SecondGame"], "Means Rotation, Subtraction", "means-tv", 1, 1, "No/Pos Confidence Change", "SVD", false)
+please(binned, tv, ["FirstGame", "SecondGame"], "Means Rotation, Both Axes", "binned-tv", 1, 1, "No/Pos Confidence Change", "First/Second Game", false)
+please(univariate, tv, ["FirstGame", "SecondGame"], "Continuous Variable on X", "univariate-tv", 1, 1, "Confidence Change", "First/Second Game", false)
+please(nested, tv, ["FirstGame", "SecondGame"], "Accounting for Nested Structure on X", "nested-tv", 1, 1, "Confidence Change", "First/Second Game", false)
+
+please(means, tv, ["FirstGame"], "Means Rotation, First Game", "means-tv-first-detail", 0.4, 0.4, "No/Pos Confidence Change", "SVD", false)
+please(means, tv, ["SecondGame"], "Means Rotation, Second Game", "means-tv-second-detail", 0.4, 0.4, "No/Pos Confidence Change", "SVD", false)
+please(means, tv, ["FirstGame", "SecondGame"], "Means Rotation, Subtraction", "means-tv-detail", 0.4, 0.4, "No/Pos Confidence Change", "SVD", false)
+please(binned, tv, ["FirstGame", "SecondGame"], "Means Rotation, Both Axes", "binned-tv-detail", 0.4, 0.4, "No/Pos Confidence Change", "First/Second Game", false)
+please(univariate, tv, ["FirstGame", "SecondGame"], "Continuous Variable on X", "univariate-tv-detail", 0.4, 0.4, "Confidence Change", "First/Second Game", false)
+please(nested, tv, ["FirstGame", "SecondGame"], "Accounting for Nested Structure on X", "nested-tv-detail", 0.4, 0.4, "Confidence Change", "First/Second Game", false)
