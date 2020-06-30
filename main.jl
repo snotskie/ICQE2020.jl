@@ -53,7 +53,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "First Game")
+title!(p, "Means Rotation, 1st Game")
 savefig(p, "first-game.svg")
 savefig(p, "first-game.png")
 run(`inkscape first-game.svg -E first-game.eps --export-ignore-filters --export-ps-level=3`)
@@ -69,7 +69,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Second Game")
+title!(p, "Means Rotation, 2nd Game")
 savefig(p, "second-game.svg")
 savefig(p, "second-game.png")
 run(`inkscape second-game.svg -E second-game.eps --export-ignore-filters --export-ps-level=3`)
@@ -84,7 +84,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Subtraction")
+title!(p, "Means Rotation, Subtraction")
 savefig(p, "subtraction.svg")
 savefig(p, "subtraction.png")
 run(`inkscape subtraction.svg -E subtraction.eps --export-ignore-filters --export-ps-level=3`)
@@ -107,7 +107,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Interaction")
+title!(p, "Custom Rotation, 1st Game")
 savefig(p, "interaction-first.svg")
 savefig(p, "interaction-first.png")
 run(`inkscape interaction-first.svg -E interaction-first.eps --export-ignore-filters --export-ps-level=3`)
@@ -123,10 +123,11 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Interaction")
+title!(p, "Custom Rotation, 2nd Game")
 savefig(p, "interaction-second.svg")
 savefig(p, "interaction-second.png")
 run(`inkscape interaction-second.svg -E interaction-second.eps --export-ignore-filters --export-ps-level=3`)
+display(p)
 
 p = plot(
     ena,
@@ -137,7 +138,8 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Interaction")
+title!(p, "Custom Rotation, Subtraction")
 savefig(p, "interaction.svg")
 savefig(p, "interaction.png")
 run(`inkscape interaction.svg -E interaction.eps --export-ignore-filters --export-ps-level=3`)
+display(p)
