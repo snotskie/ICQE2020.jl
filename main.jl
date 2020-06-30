@@ -48,7 +48,7 @@ p = plot(
     artist=tv,
     xaxisname="First/Second Game",
     yaxisname="SVD",
-    displayFilter=RSRow -> RSRow[:Condition] in ["FirstGame"],
+    displayFilter=RSRow -> RSRow[:Condition] in ["FirstGame"]
 )
 
 xlims!(p, -1, +1)
@@ -64,7 +64,7 @@ p = plot(
     artist=tv,
     xaxisname="First/Second Game",
     yaxisname="SVD",
-    displayFilter=RSRow -> RSRow[:Condition] in ["SecondGame"],
+    displayFilter=RSRow -> RSRow[:Condition] in ["SecondGame"]
 )
 
 xlims!(p, -1, +1)
@@ -101,6 +101,37 @@ p = plot(
     ena,
     artist=tv,
     xaxisname="First/Second Game",
+    yaxisname="First/Second Half",
+    displayFilter=RSRow -> RSRow[:Condition] in ["FirstGame"]
+)
+
+xlims!(p, -1, +1)
+ylims!(p, -1, +1)
+title!(p, "Interaction")
+savefig(p, "interaction-first.svg")
+savefig(p, "interaction-first.png")
+run(`inkscape interaction-first.svg -E interaction-first.eps --export-ignore-filters --export-ps-level=3`)
+display(p)
+
+p = plot(
+    ena,
+    artist=tv,
+    xaxisname="First/Second Game",
+    yaxisname="First/Second Half",
+    displayFilter=RSRow -> RSRow[:Condition] in ["SecondGame"]
+)
+
+xlims!(p, -1, +1)
+ylims!(p, -1, +1)
+title!(p, "Interaction")
+savefig(p, "interaction-second.svg")
+savefig(p, "interaction-second.png")
+run(`inkscape interaction-second.svg -E interaction-second.eps --export-ignore-filters --export-ps-level=3`)
+
+p = plot(
+    ena,
+    artist=tv,
+    xaxisname="First/Second Game",
     yaxisname="First/Second Half"
 )
 
@@ -110,4 +141,3 @@ title!(p, "Interaction")
 savefig(p, "interaction.svg")
 savefig(p, "interaction.png")
 run(`inkscape interaction.svg -E interaction.eps --export-ignore-filters --export-ps-level=3`)
-display(p)
