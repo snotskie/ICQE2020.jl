@@ -24,7 +24,7 @@ codes = [
 ]
 
 # Rotations
-means = MeansRotation(:Condition, "FirstGame", "SecondGame")
+means = MeansRotation(:Condition, "FirstGame", "SecondGame", flipsvd=true)
 interaction = EpistemicNetworkAnalysis.Formula2Rotation(
     LinearModel, 2, @formula(y ~ 1 + Condition + GameHalf + Condition&GameHalf), Dict(:Condition => EffectsCoding(), :GameHalf => EffectsCoding()),
     LinearModel, 2, @formula(y ~ 1 + GameHalf), nothing #Dict(:CondGroupName => EffectsCoding())
