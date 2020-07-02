@@ -167,7 +167,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Means Rotation, First Game")
+title!(p, "Means Rotation, First Half")
 savefig(p, "first-half.svg")
 savefig(p, "first-half.png")
 run(`inkscape first-half.svg -E first-half.eps --export-ignore-filters --export-ps-level=3`)
@@ -183,7 +183,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Means Rotation, Second Game")
+title!(p, "Means Rotation, Second Half")
 savefig(p, "second-half.svg")
 savefig(p, "second-half.png")
 run(`inkscape second-half.svg -E second-half.eps --export-ignore-filters --export-ps-level=3`)
@@ -198,7 +198,7 @@ p = plot(
 
 xlims!(p, -1, +1)
 ylims!(p, -1, +1)
-title!(p, "Means Rotation, Subtraction")
+title!(p, "Means Rotation, Subtraction, Halves")
 savefig(p, "subtraction2.svg")
 savefig(p, "subtraction2.png")
 run(`inkscape subtraction2.svg -E subtraction2.eps --export-ignore-filters --export-ps-level=3`)
